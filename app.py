@@ -1,17 +1,57 @@
 # streamlit_app.py
+import face_recognition
 import streamlit as st
 import cv2
 import numpy as np
 import os
-from face_recognition_utils import capture_face_data, recognize_face_video, recognize_face_in_image, \
-    capture_face_data_from_folder, check_face_in_video, recognize_face_in_image_stream
+
+from PIL import Image
+
+from face_recognition_utils import *
 
 FACE_DIR = "./faces"
 if not os.path.exists(FACE_DIR):
     os.makedirs(FACE_DIR)
 
-st.title('Helos.ai Face Model App')
+def recognize_face_video():
+    st.title("Real-time Face Recognition")
+    known_faces = load_known_faces()
+    frame_window = st.image([])
 
+    cap = cv2.VideoCapture(0)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            st.error("Failed to capture frame")
+            break
+
+        face_locations = face_recognition.face_locations(frame)
+        face_encodings = face_recognition.face_encodings(frame, face_locations)
+
+        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+            label = "Unknown"
+            for name, known_face_encodings in known_faces.items():
+                matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+                if True in matches:
+                    label = name
+                    break
+
+            cv2.putText(frame, label, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = Image.fromarray(frame)
+        frame_window.image(frame)
+
+
+
+    cap.release()
+
+
+
+
+st.title('Helos.ai Face Model App')
 option = st.sidebar.selectbox(
     'Choose an option:',
     ('Capture Face Data', 'Recognize Face in Real-time Video', 'Recognize Face in Image', 'Capture Face Data from Folder', 'Check Face in Video')

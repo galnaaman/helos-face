@@ -10,6 +10,15 @@ FACE_DIR = "./faces"
 if not os.path.exists(FACE_DIR):
     os.makedirs(FACE_DIR)
 
+def load_known_faces():
+    known_faces = {}
+    for filename in os.listdir(FACE_DIR):
+        if filename.endswith('_data.npy'):
+            encodings = np.load(os.path.join(FACE_DIR, filename), allow_pickle=True)
+            known_faces[filename.split('_')[0]] = encodings
+    return known_faces
+
+
 
 def capture_face_data(name):
     print(f"[INFO] Starting face data capture for {name}...")
